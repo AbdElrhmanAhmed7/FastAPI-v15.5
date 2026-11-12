@@ -722,6 +722,12 @@ Evidence: `verification/2026-11-12-v14.5/` — `gates.log` (10 gates), `campaign
 
 ### 9.9 Eighth delivery (2026-11-12): `FastAPI-v15` — the wrapper returned as the *workspace* folder
 
+> **Correction — see §9.10.** This section blames the upload. That was wrong. The
+> ninth delivery proved the workspace itself kept the repository inside `Final/`, so
+> uploading the workspace *contents* — the correct action, and the one actually
+> taken — faithfully reproduced the wrapper. The upload was right; the workspace
+> layout was the defect. It is now fixed structurally, not by instruction.
+
 The project was uploaded to **`AbdElrhmanAhmed7/FastAPI-v15`** (commit `5ee0295`,
 message `v15`, 233 tracked files). The code was fine. The layout was not:
 
@@ -842,6 +848,139 @@ recorded in `releases/delivery-roundtrip.log` — it is *about* the package, so 
 committed but excluded from the patch and the zip, for the same reason the artefacts
 are: a package cannot contain the log that describes applying it.
 
+### 9.10 Ninth delivery (2026-11-13): `FastAPI-v15.5` — the wrapper was the workspace, and the fix is structural
+
+The project was uploaded to **`AbdElrhmanAhmed7/FastAPI-v15.5`** (commit `c36ff13`,
+message `v15.5`, 246 tracked files). The tree inside was the repaired v15 delivery —
+every gate green, both delivery routes proven. The layout was wrong again:
+
+```
+<git root>/
+├── Final/            ← the entire project, one level too deep (245 files)
+└── HANDOVER-v15.md   ← the Arabic handover note, written beside the repository
+```
+
+#### The diagnosis in §9.9 was wrong, and this is how it showed
+
+The root of the upload is exactly `{Final, HANDOVER-v15.md}`. That is not a stray
+folder someone dragged by mistake — it is **the contents of the assistant workspace**,
+uploaded correctly. The workspace held the repository in a `Final/` subdirectory, so
+"upload the contents of the workspace" produced `Final/…` at the git root. The eighth
+delivery carries the same fingerprint: its root also contained `.scratch/`, a directory
+that only ever existed in the workspace.
+
+So the instruction that ended §9.9 — *upload the repository, not the workspace* — was
+addressed to the wrong party. The user was already uploading contents, not folders.
+The wrapper was manufactured one step earlier, by the workspace layout.
+
+#### The fix is structural
+
+The repository is now checked out **at the workspace root itself**. The two roots are
+the same directory, so the action that produced the wrapper now produces the correct
+layout: uploading the workspace contents puts `.github/` where GitHub looks for it.
+No rule has to be remembered, and no folder has to be opened first.
+
+```
+<workspace root> == <git root>
+├── .github/workflows/backend.yml   ← discovered by GitHub
+├── NOVA/  tools/  verification/  releases/  reference/
+├── README.md  PROJECT_STATUS.md  MIGRATION.md
+└── .gitignore                      ← ignores /uploads/ and /.arena/ (workspace noise)
+```
+
+`tools/restructure_repo.sh` performed the promotion with `git mv`, so history follows
+the files. `/uploads/` and `/.arena/` are gitignored so the two roots can coexist
+without platform directories entering the tree.
+
+The Arabic handover note left the repository for a second reason:
+`tests/test_english_content.py` scans every text file in the tree, so an Arabic
+document at the root **fails the language gate**. It is delivered in the conversation
+instead of as a file that the next upload would sweep back in.
+
+#### Measured on arrival, not inferred
+
+```
+$ bash tools/check_layout.sh
+✗ NOVA/backend is not at the git root
+  Fix: bash tools/restructure_repo.sh
+
+GET /repos/AbdElrhmanAhmed7/FastAPI-v15.5/actions/workflows → {"total_count": 0, "workflows": []}
+GET /repos/AbdElrhmanAhmed7/FastAPI-v15.5/actions/runs      → {"total_count": 0, "workflow_runs": []}
+```
+
+| Check | Result on the tree as uploaded |
+| --- | --- |
+| `bash tools/check_layout.sh` | ✗ `NOVA/backend is not at the git root` |
+| `cd releases && sha256sum -c SHA256SUMS.txt` | ✗ `nova-backend-final.zip: FAILED open or read` — gitignored, so it never travels with a clone |
+| `git am releases/nova-backend-final.patch` | ✗ `patch does not apply` — it targets `5ee0295`, and `5ee0295`, `40f5878`, `bbfa863`, `fd73e5a` are all absent from this squashed history |
+
+The committed patch was the v15 package, one delivery out of date: it still tried to
+delete `.scratch/apply_docs.py`, a file this history never had. A patch is only valid
+against the commit that is actually on GitHub, so both artefacts were regenerated
+above `c36ff13` and both routes were executed again.
+
+#### Re-verified from scratch on the repaired tree
+
+New clone, new virtualenv, nothing reused from the previous session:
+
+| Gate | Result |
+| --- | --- |
+| `check_layout.sh` | ✅ layout ok — git root = project root = workspace root |
+| `ruff check .` | ✅ All checks passed |
+| `ruff format --check .` | ✅ 113 files already formatted |
+| `mypy app scripts` | ✅ no issues in 82 source files |
+| `validate_content.py --strict` | ✅ 15 missions / 95 actions – 0 errors, 0 warnings |
+| `audit_routes.py --check` | ✅ 0 errors, 0 warnings (67 operations, 15 guarded) |
+| `export_openapi.py --check` | ✅ contract up to date (67 operations) |
+| `pytest --cov=app` | ✅ **451 passed** · TOTAL **94%** |
+| `playthrough.py --in-process --seed 7` | ✅ 15/15 · 93 ok / 0 mistakes · readiness 100 (S) |
+| `audit_player_text.py` (in-process) | ✅ 996 responses · 473 distinct · 67/67 operations · 0 violations |
+| `live_probes.py --no-live` | ✅ 12 probes · 0 failures |
+| `live_probes.py` (live NASA) | ✅ **14 probes · 0 failures** · POWER `live` |
+| `audit_player_text.py --base-url …` (real socket) | ✅ 996 responses · 473 distinct · 67/67 operations · 0 violations |
+| `preview_smoke.py --base-url …` | ✅ readiness · console 47,278 bytes / 0 external assets · repair-before-valve → 409 · correct order completes · 27 events |
+| `verify_delivery.sh --base c36ff13` | ✅ checksums · `git am` round trip · zip contents pass · wrapper rejected |
+| GitHub Actions (`backend`) | ⚠️ **0 workflows / 0 runs on `c36ff13`** — the wrapper hid the workflow. It becomes discoverable once this repair is pushed |
+
+Python 3.11.2, FastAPI 0.162.5, SQLAlchemy 2.0.57, pytest 9.2.0 — identical to the
+previous passes, so the runs are directly comparable. The one suite warning is still
+Starlette's own `httpx`/`TestClient` deprecation notice, not a project defect.
+
+#### One number moved, and it is not a regression
+
+The live player-text audit reports **473** distinct strings this time; the v15 pass
+reported 476. The invariants are unchanged — 996 responses, 67/67 operations,
+0 violations — and the in-process audit is 473 in both passes. The difference is
+entirely in **third-party payload text**, which the live audit reads by design:
+
+| Field | v15 pass | v15.5 pass |
+| --- | --- | --- |
+| APOD `title` | `Perseverance Selfie at Rochette` (bundled fallback after a 500) | `NASA Science` (live payload) |
+| NEO `name` | four asteroid designations from the live feed | `433 Eros (A898 PA)` — the feed returned **429** |
+| Mars photos `reason` | `404 Not Found` | `429 Too Many Requests` |
+
+NASA's public `DEMO_KEY` rate-limited two endpoints during this run. The bundled
+fallbacks absorbed it, the probes still reported **14/14 with 0 failures**, and every
+string served to the player stayed English. So the distinct-string count of a *live*
+audit is not a constant and should not be quoted as one; the response count, operation
+coverage and violation count are. The degradation path was exercised for real rather
+than simulated, which is the more useful result.
+
+Evidence: `verification/2026-11-13-v15.5/` — `gates.log` (10 gates), `campaign.json`,
+`player-text.json` / `.md`, `player-text-live.json` / `.md` / `.log`,
+`live-probes.json` (offline), `live-probes-live.json` / `.log` (NASA POWER `live`),
+`preview-smoke.log`, and `github-actions.json` / `.log` (the zero-workflow measurement
+on `FastAPI-v15.5`, with `Final-v14.5` as its green control). The delivery round trip
+is recorded in `releases/delivery-roundtrip.log`.
+
+#### What this delivery changes about the process
+
+Nine uploads, six wrappers, and the last two were caused by the workspace rather than
+the upload. A guard that detects a defect after it happens is worth having; a layout
+that cannot produce the defect is worth more. The guard stays — it is still the only
+thing that catches a wrapper before `make install` — but it should now have nothing
+to catch.
+
 ---
 
 ## 10. Known limits and deliberately deferred decisions
@@ -917,16 +1056,19 @@ The backend is ready to receive a 3D client immediately. Suggested order:
 ## 13. Delivery files
 
 The tree is **at the repository root** (as GitHub requires) in
-`AbdElrhmanAhmed7/FastAPI-v15`, and the new commits sit above `5ee0295 ("v15")` — the upload that
-arrived inside a `Final/` wrapper, hiding the workflow from GitHub entirely (§9.9):
+`AbdElrhmanAhmed7/FastAPI-v15.5`, and the new commits sit above `c36ff13 ("v15.5")` — the upload that
+arrived inside a `Final/` wrapper, hiding the workflow from GitHub entirely (§9.10).
+The git root is now also the delivery workspace root, so uploading the workspace
+contents can no longer create that wrapper:
 
 | File | What it is |
 | --- | --- |
 | Repository root | `README.md` · `PROJECT_STATUS.md` · `MIGRATION.md` · `.github/` · `NOVA/` · `tools/` · `verification/` · `releases/` · `reference/` |
-| `releases/nova-backend-final.patch` | This session's delta (the layout repair, the v15 delivery documents and evidence, and the round-trip tool) – apply with `git am` on a clean clone of `5ee0295` |
+| `releases/nova-backend-final.patch` | This session's delta (the layout repair, the workspace-root fix, and the v15.5 delivery documents and evidence) – apply with `git am` on a clean clone of `c36ff13` |
 | `releases/nova-backend-final.zip` | Full tree snapshot (`git archive HEAD`) without the generated artefacts – **not committed to git** (`releases/*.zip` is in `.gitignore`), generated locally |
 | `releases/SHA256SUMS.txt` | Hashes of the generated files (`sha256sum -c`) |
-| `verification/2026-11-12-v15/` | **The current delivery evidence:** 10 gates, campaign, player-text audit (in-process + real socket), offline and live probes, preview smoke test, the delivery round trip, and the GitHub Actions measurement (0 workflows on the wrapper) |
+| `verification/2026-11-13-v15.5/` | **The current delivery evidence:** 10 gates, campaign, player-text audit (in-process + real socket), offline and live probes, preview smoke test, and the GitHub Actions measurement (0 workflows on the wrapper, with a green control) |
+| `verification/2026-11-12-v15/` | Previous pass (`FastAPI-v15`): 10 gates, campaign, player-text audit, offline and live probes, preview smoke test, and the first delivery round trip |
 | `verification/2026-11-12-v14.5/` | Previous pass (`Final-v14.5`): 10 gates, campaign, player-text audit, offline and live probes, preview smoke test, green CI |
 | `verification/2026-11-12-v14/` | Previous pass (`NovaAPI-v14`): 10 gates, campaign, player-text audit, offline and live probes, preview smoke test, green CI |
 | `verification/2026-11-12-final/` | Previous pass (fifth wrapper removed): 10 gates, campaign, player-text audit, offline and live probes, preview smoke test |
@@ -942,19 +1084,20 @@ arrived inside a `Final/` wrapper, hiding the workflow from GitHub entirely (§9
 
 ```bash
 # On a clean clone from GitHub (the patch repairs the layout):
-git clone https://github.com/AbdElrhmanAhmed7/FastAPI-v15 && cd FastAPI-v15
-git am /path/to/nova-backend-final.patch    # layout repair + v15 docs + evidence
+git clone https://github.com/FastAPI-v15.5 && cd FastAPI-v15.5
+git am /path/to/nova-backend-final.patch    # layout repair + v15.5 docs + evidence
 bash tools/check_layout.sh                  # ✓ layout ok
 cd NOVA/backend && make install
 cd ../.. && bash tools/verify.sh --live      # all gates + campaign + probes
-bash tools/verify_delivery.sh --base 5ee0295 # both delivery routes, proven
+bash tools/verify_delivery.sh --base c36ff13 # both delivery routes, proven
 git push origin main                        # requires your GitHub permissions
 ```
 
-> **Important:** if you upload the tree through the GitHub UI instead of `git push`,
-> drag the **contents** of the folder, not the folder itself. Uploading a whole folder
-> is what created the wrapper six times — most recently `Final/`, when the *workspace*
-> folder was uploaded instead of the repository inside it. After any upload:
+> **Important:** if you upload through the GitHub UI instead of `git push`, drag the
+> **contents** of the project folder, not the folder itself. Note that the last two
+> wrappers were *not* this mistake: the workspace kept the repo in `Final/`, so
+> uploading its contents was correct and still produced a wrapper (§9.10). The repo
+> now sits at the workspace root, which removes the cause. After any upload:
 > `bash tools/check_layout.sh` must say `✓ layout ok`.
 
 **After pushing:** open the **Actions** tab on GitHub. A workflow named `backend` must
@@ -963,7 +1106,9 @@ appear and run (3 jobs). If it does not, there is another wrapper around the pro
 
 **Bottom line: the backend is closed and verified — 15/15 missions, 451 tests, 94%
 coverage, 14 probes against a running server, real NASA POWER data working, and the
-campaign fully playable through the public API. CI ran green (3/3 jobs) on the two
-previous uploads; on `FastAPI-v15` GitHub discovered *no workflow at all* because the
-tree arrived inside a wrapper, and that is now repaired — the `backend` workflow sits
-where GitHub looks for it. What remains in the project is the 3D frontend.**
+campaign fully playable through the public API. CI ran green (3/3 jobs) on
+`NovaAPI-v14` and `Final-v14.5`; on `FastAPI-v15` and `FastAPI-v15.5` GitHub discovered
+*no workflow at all*, because the tree sat one level below the git root. That is now
+repaired at the source — the repository is the workspace root — so the `backend`
+workflow sits where GitHub looks for it and the next upload cannot re-create the
+wrapper. What remains in the project is the 3D frontend.**

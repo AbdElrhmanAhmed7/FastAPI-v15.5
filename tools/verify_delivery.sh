@@ -155,7 +155,7 @@ echo "═══ 4. negative test: uploading the folder itself must be rejected �
     echo "✗ the guard did NOT catch the wrapper" >&2
     exit 1
   fi
-  echo "✓ wrapper rejected – this is the trap that broke six deliveries"
+  echo "✓ wrapper rejected – this is the trap that broke seven deliveries"
 ) || fail "the layout guard is not catching the wrapper"
 
 echo

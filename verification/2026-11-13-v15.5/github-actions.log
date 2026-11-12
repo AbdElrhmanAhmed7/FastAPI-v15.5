@@ -1,0 +1,71 @@
+# GitHub Actions - what GitHub actually saw (measured via the REST API)
+
+## Subject: AbdElrhmanAhmed7/FastAPI-v15.5 @ c36ff13 (the tree as uploaded)
+
+  root entries : Final, HANDOVER-v15.md
+  layout       : <git root>/Final/.github/workflows/backend.yml  <- one level too deep
+  GET /actions/workflows -> total_count = 0
+  GET /actions/runs      -> total_count = 0
+
+  [FAIL] No workflow was discovered, so no gate ever ran on this upload.
+         GitHub did not report a failure - there was nothing to run.
+
+## Control: AbdElrhmanAhmed7/Final-v14.5 @ bbfa863 (same workflow file, correct depth)
+
+  layout       : <git root>/.github/workflows/backend.yml
+  GET /actions/workflows -> total_count = 1 [('backend', 'active')]
+  GET /actions/runs      -> total_count = 1
+
+  run 43258592691 - backend - completed / success
+  https://github.com/AbdElrhmanAhmed7/Final-v14.5/actions/runs/43258592691
+  [PASS] lint · types · content · contract (2026-11-12T16:26:01Z -> 2026-11-12T16:26:31Z)
+      ok  Set up job
+      ok  Run actions/checkout@v4
+      ok  Run actions/setup-python@v5
+      ok  Run pip install -r requirements-dev.txt
+      ok  Ruff
+      ok  Mypy
+      ok  Mission content is winnable
+      ok  Route audit (guards, typed responses, security)
+      ok  Exported OpenAPI contract is fresh
+      ok  Player-facing API text is English
+      ok  Run actions/upload-artifact@v4
+      ok  Post Run actions/setup-python@v5
+      ok  Post Run actions/checkout@v4
+      ok  Complete job
+  [PASS] full campaign playthrough (2026-11-12T16:26:01Z -> 2026-11-12T16:26:33Z)
+      ok  Set up job
+      ok  Run actions/checkout@v4
+      ok  Run actions/setup-python@v5
+      ok  Run pip install -r requirements-dev.txt
+      ok  Play all 15 missions over the public API
+      ok  Run actions/upload-artifact@v4
+      ok  Post Run actions/setup-python@v5
+      ok  Post Run actions/checkout@v4
+      ok  Complete job
+  [PASS] pytest (offline) (2026-11-12T16:26:01Z -> 2026-11-12T16:28:23Z)
+      ok  Set up job
+      ok  Run actions/checkout@v4
+      ok  Run actions/setup-python@v5
+      ok  Run pip install -r requirements-dev.txt
+      ok  Test with coverage
+      ok  Run actions/upload-artifact@v4
+      ok  Post Run actions/setup-python@v5
+      ok  Post Run actions/checkout@v4
+      ok  Complete job
+
+## Root cause
+
+The uploaded root is exactly {Final, HANDOVER-v15.md}: the contents of the assistant workspace, uploaded as instructed. The workspace kept the git repository inside Final/, so the correct upload action reproduced that subdirectory at the git root. The wrapper was created by the workspace layout, not by the upload. The eighth delivery (FastAPI-v15) carries the same fingerprint: its root also contained .scratch/, a directory that only ever existed in the workspace.
+
+## Structural fix
+
+The repository is now checked out at the workspace root itself, and /uploads/ and /.arena/ are gitignored. Uploading the workspace contents therefore lands .github/workflows/backend.yml at the git root, so the same action can no longer produce a wrapper.
+
+## Conclusion
+
+The workflow file is byte-identical in both trees. The only difference is its depth: at <git root>/.github/workflows it is discovered and runs; one level below, GitHub reports zero workflows and zero runs. This is a direct measurement, not an inference from a missing badge.
+
+After the repair in this delivery the workflow sits at <git root>/.github/workflows/backend.yml,
+which is the control layout, and the git root is also the workspace root.
+`bash tools/check_layout.sh` verifies it locally in 0.1s.

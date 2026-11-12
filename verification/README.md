@@ -6,14 +6,23 @@ humans (and for academic review).
 
 ## Files
 
-The current delivery evidence is **`2026-11-12-v15/`** — the run on the tree uploaded to
-`AbdElrhmanAhmed7/FastAPI-v15` (`5ee0295`) **after** the `Final/` wrapper was removed, the upload
-that left GitHub with zero discovered workflows (§9.9 of `PROJECT_STATUS.md`). Earlier runs of the
-same date are kept unchanged for traceability.
+The current delivery evidence is **`2026-11-13-v15.5/`** — the run on the tree uploaded to
+`AbdElrhmanAhmed7/FastAPI-v15.5` (`c36ff13`) **after** the `Final/` wrapper was removed. That wrapper
+came from the workspace layout, not from the upload, and the repository now sits at the
+workspace root so it cannot recur (§9.10 of `PROJECT_STATUS.md`). Earlier runs are kept
+unchanged for traceability.
 
 | Path | What it is | How to regenerate it |
 | --- | --- | --- |
-| `verification/2026-11-12-v15/gates.log` | **Current run.** 10 gates: layout · ruff · mypy · content · route audit · contract · pytest with coverage (451 passed, 94%) · campaign · player text · socket probes | `bash tools/verify.sh --label 2026-11-12-v15` |
+| `verification/2026-11-13-v15.5/gates.log` | **Current run.** 10 gates: layout · ruff · mypy · content · route audit · contract · pytest with coverage (451 passed, 94%) · campaign · player text · socket probes | `bash tools/verify.sh --label 2026-11-13-v15.5` |
+| `verification/2026-11-13-v15.5/campaign.json` | Full campaign report: 15/15 missions, 93 actions, 0 mistakes, readiness 100 (S) | Same command above |
+| `verification/2026-11-13-v15.5/player-text.json` / `.md` | Player-facing text audit, in-process: 996 responses · 473 distinct · 67/67 operations · 0 violations | Same command above (or `make text`) |
+| `verification/2026-11-13-v15.5/player-text-live.json` / `.md` / `.log` | The same audit against the **running preview server**: 996 responses · 473 distinct · 67/67 operations · 0 violations. The distinct count moves between passes because it includes live NASA payload text (this pass: APOD live, NEO and Mars photos rate-limited with `429`, fallbacks served); responses, coverage and violations are the invariants | `cd NOVA/backend && .venv/bin/python scripts/audit_player_text.py --base-url http://127.0.0.1:8000 --json … --markdown …` |
+| `verification/2026-11-13-v15.5/live-probes.json` | Offline socket probes (12 probes, 0 failures) | `bash tools/verify.sh --label 2026-11-13-v15.5` |
+| `verification/2026-11-13-v15.5/live-probes-live.json` / `.log` | Probes with real NASA: 14 probes, 0 failures · POWER `live` (Δmean 0.8858 °C, 4.06%) · POWER `cache` · APOD `bundled` (upstream 500) | `cd NOVA/backend && .venv/bin/python scripts/live_probes.py --json …` |
+| `verification/2026-11-13-v15.5/preview-smoke.log` | The server the user opens (port 8000): readiness, console 47,278 bytes with 0 external assets, repair-before-valve refused with 409, correct order completes, 27 events | `cd NOVA/backend && .venv/bin/python ../../reference/scratch/preview_smoke.py --base-url http://127.0.0.1:8000` |
+| `verification/2026-11-13-v15.5/github-actions.json` / `.log` | **The CI measurement on GitHub itself:** `FastAPI-v15.5` (`c36ff13`) has **0 workflows and 0 runs** — the `Final/` wrapper hid the workflow. `Final-v14.5` (`bbfa863`) is the control: 1 active workflow, 3/3 jobs success | GitHub API: `/repos/AbdElrhmanAhmed7/FastAPI-v15.5/actions/workflows` and `/actions/runs` |
+| `verification/2026-11-12-v15/gates.log` | Previous pass (`FastAPI-v15`). 10 gates: layout · ruff · mypy · content · route audit · contract · pytest with coverage (451 passed, 94%) · campaign · player text · socket probes | `bash tools/verify.sh --label 2026-11-12-v15` |
 | `verification/2026-11-12-v15/campaign.json` | Full campaign report: 15/15 missions, 93 actions, 0 mistakes, readiness 100 (S) | Same command above |
 | `verification/2026-11-12-v15/player-text.json` / `.md` | Player-facing text audit, in-process: 996 responses · 473 distinct · 67/67 operations · 0 violations | Same command above (or `make text`) |
 | `verification/2026-11-12-v15/player-text-live.json` / `.md` / `.log` | The same audit against the **running preview server**: 996 responses · 476 distinct · 67/67 operations | `cd NOVA/backend && .venv/bin/python scripts/audit_player_text.py --base-url http://127.0.0.1:8000 --json … --markdown …` |

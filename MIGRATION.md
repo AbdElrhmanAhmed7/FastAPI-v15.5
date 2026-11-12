@@ -467,6 +467,10 @@ with 3 jobs, and `bash tools/check_layout.sh` still says `✓ layout ok`.
 
 ## 12. Eighth delivery: `FastAPI-v15` — the wrapper came back as the workspace folder (2026-11-12)
 
+> **Superseded by §13.** The rule below — *upload the repository, not the workspace* —
+> was addressed to the wrong party. The upload was already correct; the workspace
+> layout created the wrapper. §13 fixes the cause.
+
 **Repo: `AbdElrhmanAhmed7/FastAPI-v15`** · commit `5ee0295` (`v15`) · 233 tracked files
 
 The sixth occurrence, and a new variant. The previous five wrappers were the release
@@ -540,6 +544,110 @@ bash tools/verify_delivery.sh --base 5ee0295
 git clone https://github.com/AbdElrhmanAhmed7/FastAPI-v15 && cd FastAPI-v15
 git am /path/to/releases/nova-backend-final.patch
 bash tools/check_layout.sh        # ✓ layout ok
+git push origin main
+```
+
+Then open the **Actions** tab: a workflow named `backend` must appear with 3 jobs. If
+the tab is empty, GitHub still cannot see the workflow — run the guard, and
+`tools/restructure_repo.sh` if it fails.
+
+## 13. Ninth delivery: `FastAPI-v15.5` — the wrapper was the workspace itself (2026-11-13)
+
+**Repo: `AbdElrhmanAhmed7/FastAPI-v15.5`** · commit `c36ff13` (`v15.5`) · 246 tracked files
+
+The seventh occurrence, and the one that identified the cause. The uploaded root was:
+
+```
+<git root>/
+├── Final/            ← .github/, NOVA/, tools/, … (245 files)
+└── HANDOVER-v15.md
+```
+
+Compare that with the assistant workspace at the end of the previous session:
+
+```
+<workspace root>/
+├── .arena/           ← platform directory, not persisted
+├── Final/            ← the git repository
+├── HANDOVER-v15.md   ← the handover note
+└── uploads/          ← upload scratch
+```
+
+They match. The user uploaded **the contents of the workspace**, which is exactly what
+the previous instructions asked for. The repository happened to live in `Final/`, so
+the contents included `Final/`. The eighth delivery has the same fingerprint — its root
+carried `.scratch/`, which only ever existed in the workspace.
+
+**The wrapper was produced by the workspace layout, not by the upload.** Six wrappers
+were diagnosed as an upload mistake; the last two were not.
+
+### Measured, not inferred
+
+```
+$ bash tools/check_layout.sh
+✗ NOVA/backend is not at the git root
+  Fix: bash tools/restructure_repo.sh
+
+GET /repos/AbdElrhmanAhmed7/FastAPI-v15.5/actions/workflows → {"total_count": 0, "workflows": []}
+GET /repos/AbdElrhmanAhmed7/FastAPI-v15.5/actions/runs      → {"total_count": 0, "workflow_runs": []}
+```
+
+Zero workflows, zero runs. The control (`Final-v14.5`, same workflow file at the correct
+depth) returns one `active` workflow and 3/3 green jobs.
+
+### The fix: make the two roots the same directory
+
+```bash
+bash tools/restructure_repo.sh   # git mv Final/* to the git root; history follows
+bash tools/check_layout.sh       # ✓ layout ok
+```
+
+and, structurally, the repository is now checked out **at the workspace root**:
+
+```
+<workspace root> == <git root>
+├── .github/workflows/backend.yml
+├── NOVA/  tools/  verification/  releases/  reference/
+└── .gitignore   →  /uploads/  /.arena/  ignored
+```
+
+Uploading the workspace contents now lands `.github/` at the git root. The action that
+used to create the wrapper is now the action that produces a correct repository — so
+the failure mode is gone, not merely documented.
+
+The Arabic handover note is no longer written into the workspace at all:
+`test_english_content.py` scans every text file in the tree, so an Arabic document at
+the root fails the language gate. It is delivered in the conversation.
+
+| # | Repository / commit | Wrapper on arrival | CI | Cause |
+| --- | --- | --- | --- | --- |
+| 1 | first delivery | `NOVA/` | never ran | release zip prefix |
+| 2 | second delivery | `repo/` | never ran | upload folder |
+| 3 | third delivery | `upstream/` | never ran | upload folder |
+| 4 | English pass | `repo/` (`novaa/`) | never ran | upload folder |
+| 5 | `Final` · `11cefe5` | `repo/` | never ran | upload folder |
+| 6 | `NovaAPI-v14` · `24dc3e6` | none | 3/3 jobs green | — |
+| 7 | `Final-v14.5` · `bbfa863` | none | 3/3 jobs green | — |
+| 8 | `FastAPI-v15` · `5ee0295` | `Final/` | 0 workflows discovered | **workspace layout** |
+| 9 | **`FastAPI-v15.5` · `c36ff13`** | **`Final/`** | **0 workflows discovered** | **workspace layout — now removed** |
+
+### The rule this delivery replaces
+
+§12 said *upload the repository, not the workspace*. That is still true advice for
+anyone dragging folders, but it was not the cause here. The rule that actually holds:
+
+> **Keep the repository at the root of whatever directory gets uploaded.** If the
+> upload unit is the workspace, the git root must be the workspace root. Detection
+> (`check_layout.sh`) is the safety net; layout is the fix.
+
+### Keep it this way
+
+```bash
+git clone https://github.com/FastAPI-v15.5 && cd FastAPI-v15.5
+git am /path/to/releases/nova-backend-final.patch
+bash tools/check_layout.sh          # ✓ layout ok
+bash tools/make_release.sh   --base c36ff13
+bash tools/verify_delivery.sh --base c36ff13
 git push origin main
 ```
 

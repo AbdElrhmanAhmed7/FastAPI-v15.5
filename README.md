@@ -210,13 +210,20 @@ bash tools/verify_delivery.sh --base <commit>   # prove the patch + zip really a
 ```
 
 `tools/check_layout.sh` runs first and needs neither a virtualenv nor a network.
-It exists because **six of the eight deliveries** were pushed inside a wrapper
-directory (`NOVA/`, `repo/`, `upstream/`, `repo/`, `repo/`, and finally `Final/` — the
-whole workspace folder), which puts `.github/workflows/backend.yml` below the git
-root — and GitHub then runs *nothing*, silently. On the last one the GitHub API
-reported **zero discovered workflows**, which is what "silently" means in practice. The guard rejects any wrapper name, a second nested copy,
-and any buried workflow; `tools/restructure_repo.sh` fixes it with `git mv`.
-Nine regression tests plant those exact mistakes in throwaway git repos.
+It exists because **seven of the nine deliveries** were pushed inside a wrapper
+directory (`NOVA/`, `repo/`, `upstream/`, `repo/`, `repo/`, then `Final/` twice), which
+puts `.github/workflows/backend.yml` below the git root — and GitHub then runs
+*nothing*, silently. On the last two the GitHub API reported **zero discovered
+workflows**, which is what "silently" means in practice. The guard rejects any wrapper
+name, a second nested copy, and any buried workflow; `tools/restructure_repo.sh` fixes
+it with `git mv`. Nine regression tests plant those exact mistakes in throwaway git repos.
+
+The last two wrappers had a different cause from the first five, and it is worth
+recording: the delivery workspace kept the repository in a `Final/` subdirectory, so
+uploading the workspace *contents* — the correct action — reproduced that subdirectory
+at the git root. The repository is therefore now kept **at the workspace root**, which
+removes the cause instead of relying on anyone remembering a rule. Detection is the
+safety net; layout is the fix (`MIGRATION.md` §13).
 
 `make check` runs ruff (lint + format), mypy, static mission-content validation, the
 route audit (guards, typed responses, security blocks), the OpenAPI freshness check,

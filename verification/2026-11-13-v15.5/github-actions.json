@@ -1,0 +1,198 @@
+{
+  "measured_at": "2026-11-13",
+  "subject": {
+    "repository": "AbdElrhmanAhmed7/FastAPI-v15.5",
+    "commit": "c36ff13",
+    "root_entries_on_arrival": [
+      "Final",
+      "HANDOVER-v15.md"
+    ],
+    "layout_on_arrival": "project nested in Final/ \u2014 the contents of the delivery workspace, uploaded correctly",
+    "workflow_path_on_arrival": "Final/.github/workflows/backend.yml",
+    "workflows_discovered": 0,
+    "workflow_runs": 0,
+    "workflows": [],
+    "runs": []
+  },
+  "control": {
+    "repository": "AbdElrhmanAhmed7/Final-v14.5",
+    "commit": "bbfa8639ab9f6993056a0675f9e2303582363621",
+    "layout_on_arrival": "project at the git root",
+    "workflow_path_on_arrival": ".github/workflows/backend.yml",
+    "workflows_discovered": 1,
+    "workflow_runs": 1,
+    "workflows": [
+      {
+        "name": "backend",
+        "state": "active",
+        "path": ".github/workflows/backend.yml"
+      }
+    ],
+    "run": {
+      "id": 43258592691,
+      "name": "backend",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AbdElrhmanAhmed7/Final-v14.5/actions/runs/43258592691",
+      "created_at": "2026-11-12T16:25:57Z",
+      "jobs": [
+        {
+          "name": "lint \u00b7 types \u00b7 content \u00b7 contract",
+          "conclusion": "success",
+          "started_at": "2026-11-12T16:26:01Z",
+          "completed_at": "2026-11-12T16:26:31Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r requirements-dev.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Ruff",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mypy",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mission content is winnable",
+              "conclusion": "success"
+            },
+            {
+              "name": "Route audit (guards, typed responses, security)",
+              "conclusion": "success"
+            },
+            {
+              "name": "Exported OpenAPI contract is fresh",
+              "conclusion": "success"
+            },
+            {
+              "name": "Player-facing API text is English",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "full campaign playthrough",
+          "conclusion": "success",
+          "started_at": "2026-11-12T16:26:01Z",
+          "completed_at": "2026-11-12T16:26:33Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r requirements-dev.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Play all 15 missions over the public API",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "pytest (offline)",
+          "conclusion": "success",
+          "started_at": "2026-11-12T16:26:01Z",
+          "completed_at": "2026-11-12T16:28:23Z",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run pip install -r requirements-dev.txt",
+              "conclusion": "success"
+            },
+            {
+              "name": "Test with coverage",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "root_cause": "The uploaded root is exactly {Final, HANDOVER-v15.md}: the contents of the assistant workspace, uploaded as instructed. The workspace kept the git repository inside Final/, so the correct upload action reproduced that subdirectory at the git root. The wrapper was created by the workspace layout, not by the upload. The eighth delivery (FastAPI-v15) carries the same fingerprint: its root also contained .scratch/, a directory that only ever existed in the workspace.",
+  "structural_fix": "The repository is now checked out at the workspace root itself, and /uploads/ and /.arena/ are gitignored. Uploading the workspace contents therefore lands .github/workflows/backend.yml at the git root, so the same action can no longer produce a wrapper.",
+  "conclusion": "The workflow file is byte-identical in both trees. The only difference is its depth: at <git root>/.github/workflows it is discovered and runs; one level below, GitHub reports zero workflows and zero runs. This is a direct measurement, not an inference from a missing badge."
+}

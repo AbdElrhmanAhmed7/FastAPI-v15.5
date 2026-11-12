@@ -4,33 +4,40 @@ The files here are **generated from a commit**, not from the working tree. The g
 anyone can take the delivery and apply it to their copy without copying `.venv`, caches,
 or a local database.
 
-## Current delivery: v15 layout repair + verification
+## Current delivery: v15.5 layout repair at the source + verification
 
-This package is generated above the GitHub baseline `5ee0295` (`v15`) of
-**`AbdElrhmanAhmed7/FastAPI-v15`** — an upload that arrived **inside a `Final/` wrapper**,
-because the *workspace* folder was uploaded rather than the repository inside it.
-GitHub consequently discovered **zero workflows and ran zero jobs**: the workflow sat
-at `Final/.github/workflows/backend.yml`, where GitHub never looks.
+This package is generated above the GitHub baseline `c36ff13` (`v15.5`) of
+**`AbdElrhmanAhmed7/FastAPI-v15.5`** — an upload that arrived **inside a `Final/` wrapper** again,
+so GitHub discovered **zero workflows and ran zero jobs**: the workflow sat at
+`Final/.github/workflows/backend.yml`, where GitHub never looks.
 
-* **The layout was repaired first.** `tools/restructure_repo.sh` promoted the project
-  to the git root with `git mv` (history follows the files), and
-  `bash tools/check_layout.sh` now passes. This patch carries that repair, so applying
-  it to a clean clone of `5ee0295` fixes CI discovery in one step.
-* Every gate was then re-run from scratch on the repaired tree (new clone, new
-  virtualenv): **451 tests · 94% coverage · 15/15 missions · 67/67 operations audited
-  for player text (in-process and over a real socket) · 12 offline + 14 live probes ·
-  0 failures** (NASA POWER `live`). Evidence: `verification/2026-11-12-v15/`.
-* **Both artefacts had to be regenerated.** The history was squashed again, so the old
-  baselines (`24dc3e6`, `bbfa863`, `fd73e5a`) no longer exist and the committed patch
-  failed to apply; the zip was absent because `releases/*.zip` is gitignored. See "A
-  squashed history retires the patch" below.
-* **The delivery is now tested, not assumed.** `bash tools/verify_delivery.sh --base 5ee0295`
+* **The cause was found, and it was not the upload.** The uploaded root was exactly
+  `{Final, HANDOVER-v15.md}` — the *contents of the assistant workspace*, uploaded
+  correctly. The workspace kept the repository in `Final/`, so the correct action
+  produced the wrapper. The eighth delivery carries the same fingerprint (`.scratch/`).
+* **The fix is structural.** The repository is now checked out at the workspace root
+  itself, and `/uploads/` and `/.arena/` are gitignored. Uploading the workspace
+  contents now puts `.github/` at the git root, so the same action can no longer create
+  a wrapper. `tools/restructure_repo.sh` performed the promotion with `git mv`, and this
+  patch carries it: applying it to a clean clone of `c36ff13` fixes CI discovery in one step.
+* Every gate was re-run from scratch on the repaired tree (new clone, new virtualenv):
+  **451 tests · 94% coverage · 15/15 missions · 67/67 operations audited for player text
+  (in-process and over a real socket) · 12 offline + 14 live probes · 0 failures**
+  (NASA POWER `live`). Evidence: `verification/2026-11-13-v15.5/`.
+* **Both artefacts had to be regenerated again.** The history was squashed again, so
+  `5ee0295`, `40f5878`, `bbfa863` and `fd73e5a` no longer exist; the committed patch was
+  the v15 package and failed to apply (it still tried to delete `.scratch/apply_docs.py`).
+  The zip was absent because `releases/*.zip` is gitignored. See "A squashed history
+  retires the patch" below.
+* **The delivery is tested, not assumed.** `bash tools/verify_delivery.sh --base c36ff13`
   checks the sums, applies this patch to a throwaway clone and compares every file,
   extracts the zip and runs the layout guard on its contents — and confirms the guard
   *rejects* the same zip uploaded as a folder.
-* The delivery documents pointed at `Final-v14.5` / `bbfa863`; they now name
-  `AbdElrhmanAhmed7/FastAPI-v15` / `5ee0295` (`PROJECT_STATUS.md` §9.9 and §13,
-  `MIGRATION.md` §12, `verification/README.md`). Earlier sections stay as history.
+* The delivery documents pointed at `FastAPI-v15` / `5ee0295`; they now name
+  `AbdElrhmanAhmed7/FastAPI-v15.5` / `c36ff13` (`PROJECT_STATUS.md` §9.10 and §13,
+  `MIGRATION.md` §13, `verification/README.md`). §9.9 and §12 keep their original text
+  with a correction notice, because the earlier diagnosis was wrong and the record
+  should show that.
 
 Earlier packages are already merged in this tree: the layout migration (`git mv` out of
 `repo/`, fifth occurrence) and the English localization (baseline `a2fd1cc`) — all
