@@ -1,2 +1,0 @@
-fb4edca6b27a66b72d9bf83e0dfbc17b9f5830bb8a837b5ab50d43690e8f12e2  nova-backend-final.patch
-dd932c972636f3c5aaf28c0053495a9694f22a2f0c24925d3b57d733c4883056  nova-backend-final.zip
